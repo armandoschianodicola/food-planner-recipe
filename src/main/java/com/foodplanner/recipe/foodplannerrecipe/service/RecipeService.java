@@ -1,8 +1,13 @@
 package com.foodplanner.recipe.foodplannerrecipe.service;
 
+import com.foodplanner.recipe.foodplannerrecipe.entity.Ingredient;
 import com.foodplanner.recipe.foodplannerrecipe.entity.IngredientDto;
 import com.foodplanner.recipe.foodplannerrecipe.entity.Recipe;
-import com.foodplanner.recipe.foodplannerrecipe.entity.RecipeDto;
+import com.foodplanner.recipe.foodplannerrecipe.model.request.RecipeRequest;
+import com.foodplanner.recipe.foodplannerrecipe.model.request.RecipeRequestTransformer;
+import com.foodplanner.recipe.foodplannerrecipe.model.response.RecipeResponse;
+import com.foodplanner.recipe.foodplannerrecipe.model.response.RecipeResponseTransformer;
+import com.foodplanner.recipe.foodplannerrecipe.repository.jpa.IngredientRepository;
 import com.foodplanner.recipe.foodplannerrecipe.repository.jpa.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,22 +21,43 @@ public class RecipeService {
     @Autowired
     private RecipeRepository recipeRepository;
 
-    private RecipeDto mapToDto(Recipe recipe) {
-        RecipeDto recipeDto = new RecipeDto();
-        recipeDto.setName(recipe.getName());
-        recipeDto.setIngredients(recipe.getIngredients().stream().map(ingredient -> {
-            IngredientDto ingredientDto = new IngredientDto();
-            ingredientDto.setName(ingredient.getName());
-            return ingredientDto;
-        }).collect(Collectors.toList()));
-        return new RecipeDto();
-    }
+    @Autowired
+    private IngredientRepository ingredientRepository;
 
-    public List<RecipeDto> getRecipes() {
+    @Autowired
+    private RecipeRequestTransformer recipeRequestTransformer;
+
+    @Autowired
+    private RecipeResponseTransformer recipeResponseTransformer;
+
+    public List<RecipeResponse> getRecipes() {
 
         List<Recipe> recipes = recipeRepository.findAll();
 
-        return recipes.stream().map(this::mapToDto).toList();
+        return recipes.stream().map(recipe -> recipeResponseTransformer.map(recipe)).collect(Collectors.toList());
 
     }
+
+    public RecipeResponse add(RecipeRequest recipeRequest) {
+
+        try {
+            Recipe recipe = recipeRequestTransformer.map(recipeRequest);
+            recipe.getIngredients().forEach(ingredient -> {
+                List<Ingredient> ingredients = ingredientRepository.findByName(ingredient.getName());
+                if (ingredients.isEmpty()) {
+                    ingredientRepository.save(ingredient);
+                }
+            });
+            Recipe newRecipe = recipeRepository.save(recipe);
+            return recipeResponseTransformer.map(newRecipe);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
+
+
+
+
