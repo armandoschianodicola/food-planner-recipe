@@ -33,6 +33,14 @@ public class IngredientService {
 
     }
 
+    public List<IngredientDto> getByName(String name) {
+
+        List<Ingredient> ingredients = ingredientRepository.findByName(name);
+
+        return ingredients.stream().map(ingredient -> responseTransformer.map(ingredient)).collect(Collectors.toList());
+
+    }
+
 }
 
 

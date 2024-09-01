@@ -21,8 +21,20 @@ public class IngredientController {
     private IngredientService service;
 
     @GetMapping("")
-    public ResponseEntity<List<IngredientDto>> getRecipes() {
+    public ResponseEntity<List<IngredientDto>> get() {
         return new ResponseEntity<>(service.get(), HttpStatus.OK) ;
+    }
+
+    @GetMapping("/{name}")
+    public ResponseEntity<List<IngredientDto>> getByName(@PathVariable String name) {
+
+        List<IngredientDto> ingredients = service.getByName(name);
+
+        if (ingredients.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(ingredients, HttpStatus.OK) ;
     }
 
 }
